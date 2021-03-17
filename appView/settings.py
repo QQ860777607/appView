@@ -83,7 +83,7 @@ DATABASES = {
         'HOST': '192.168.0.123',      # mysql服务所在的主机ip 0.123　56.101
         'PORT': 3306,                  # mysql服务端口
         'USER': 'root',
-        'PASSWORD': 'Qq36463352',
+        'PASSWORD': '设置密码',
     }
 }
 
