@@ -1,0 +1,71 @@
+.container{
+    display: flex;
+    /*容器内元素之间环绕留有一定空间*/
+    justify-content: flex-start;
+    /*
+    center：居中
+    flex-start（默认值）：左对齐
+    flex-end：右对齐
+    space-between：两端对齐
+    space-around：每个项目两侧的间隔相等
+    */
+    align-items: center;
+    /* align-items:
+    flex-start：交叉轴的起点对齐。
+    flex-end：交叉轴的终点对齐。
+    center：交叉轴的中点对齐。
+    baseline: 项目的第一行文字的基线对齐。
+    stretch（默认值）：如果项目未设置高度或设为auto，将占满整个容器的高度。
+    */
+    flex-wrap: wrap-reverse;
+    /*
+    nowrap（默认）：不换行
+    wrap：换行，第一行在上方
+    wrap-reverse：换行，第一行在下方
+    */
+}
+.container .box{
+    display: flex;
+    justify-content: space-around;
+    flex-direction: column;
+    align-items: center;
+    width: 100px;
+    height: 140px;
+    margin: 20px;
+}
+.container .box .img{
+    cursor: pointer;
+    width:100px;
+    height: 140px;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.5),
+    -5px -5px 10px rgba(255,255,255,1);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #efeeee;
+    transition: box-shadow .2s ease-out;
+    position: relative;
+}
+.container .box .img img{
+    width: 100px;
+    transition: width .2s ease-out;
+    /*实现效果以及实现方向以及实现时间 ease-out代表过度效果*/
+}
+.container .box p{
+    color: slategray;
+    font-size: 16px;
+}
+.container .box .img:hover{
+    box-shadow: 0 0 0 rgba(0,0,0,0.1),
+    0 0 0 rgba(255,255,255,1),
+     inset 1px 1px 2px rgba(0,0,0,0.3),
+     inset -1px -1px 2px rgba(255,255,255,1);
+    /*内嵌投影值*/
+    transition: box-shadow .2s ease-out;
+}
+.container .box .img:hover img{
+    width: 100px;
+    transition: width .2s ease-out;
+}
+
