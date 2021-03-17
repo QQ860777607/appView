@@ -1,0 +1,206 @@
+[
+    {
+        "model": "dataView.userinfo", 
+        "pk": "14a0f5f7-7a7f-11eb-bd91-4cedfbcb0451", 
+        "fields": {
+            "alias": "gly", 
+            "userName": "admin", 
+            "realName": "管理员", 
+            "userPhone": "admin", 
+            "userMail": "", 
+            "password": "pbkdf2_sha256$216000$vnNXPf5JXKqz$4qhwDeo6YEmzf3BbxZjwfptYtbVWRBhyVphzm4BGXdw=", 
+            "status": 1, 
+            "user_type": 3, 
+            "creationType": 1, 
+            "lastOperationType": 1, 
+            "description": "", 
+            "uBDate": null, 
+            "uDate": null, 
+            "uSex": 1, 
+            "identity": "", 
+            "uCollege": 7, 
+            "uHobbies": "", 
+            "uPhotos": null, 
+            "uProvince": "", 
+            "uCity": "", 
+            "uCounty": "", 
+            "uStreet": "", 
+            "ctime": null, 
+            "uptime": null, 
+            "uRole": [
+                "1e42bd61-8164-11eb-ab64-4cedfbcb0451"
+            ]
+        }
+    }, 
+    {
+        "model": "dataView.systemmenu", 
+        "pk": 1, 
+        "fields": {
+            "pid": 0, 
+            "title": "管理系统", 
+            "icon": "fa fa-lemon-o", 
+            "href": "", 
+            "target": "_self", 
+            "sort": 0, 
+            "status": 1, 
+            "remark": null, 
+            "is_sys_menu": 1
+        }
+    }, 
+    {
+        "model": "dataView.systemmenu", 
+        "pk": 2, 
+        "fields": {
+            "pid": 1, 
+            "title": "组织架构", 
+            "icon": "fa fa-adn", 
+            "href": "structure", 
+            "target": "_self", 
+            "sort": 1, 
+            "status": 1, 
+            "remark": null, 
+            "is_sys_menu": 1
+        }
+    }, 
+    {
+        "model": "dataView.systemmenu", 
+        "pk": 3, 
+        "fields": {
+            "pid": 1, 
+            "title": "目录管理", 
+            "icon": "fa fa-adn", 
+            "href": "menu_info", 
+            "target": "_self", 
+            "sort": 0, 
+            "status": 1, 
+            "remark": null, 
+            "is_sys_menu": 1
+        }
+    }, 
+    {
+        "model": "dataView.systemmenu", 
+        "pk": 4, 
+        "fields": {
+            "pid": 1, 
+            "title": "用户管理", 
+            "icon": "fa fa-address-book", 
+            "href": "accountManagement", 
+            "target": "_self", 
+            "sort": 2, 
+            "status": 1, 
+            "remark": "", 
+            "is_sys_menu": 1
+        }
+    }, 
+    {
+        "model": "dataView.systemmenu", 
+        "pk": 5, 
+        "fields": {
+            "pid": 1, 
+            "title": "角色管理",
+            "icon": "fa fa-adn", 
+            "href": "roleInfo", 
+            "target": "_self", 
+            "sort": 3, 
+            "status": 1, 
+            "remark": null, 
+            "is_sys_menu": 1
+        }
+    },
+	{
+		"model": "dataView.systemmenu", 
+		"pk": 6, 
+		"fields": {
+			"pid": 1, 
+			"title": "图标列表", 
+			"icon": "fa fa-align-justify", 
+			"href": "iconList", 
+			"target": "_self", 
+			"sort": 4, 
+			"status": 1, 
+			"remark": "", 
+			"is_sys_menu": 1
+		} 
+	},	
+    {
+        "model": "dataView.role", 
+        "pk": "1e42bd61-8164-11eb-ab64-4cedfbcb0451", 
+        "fields": {
+            "sortIndex": 0, 
+            "roleName": "超级管理员", 
+            "remark": ""
+        }
+    }, 
+    {
+        "model": "dataView.author", 
+        "pk": "26a7668b-8164-11eb-9bbf-4cedfbcb0451", 
+        "fields": {
+            "role": "1e42bd61-8164-11eb-ab64-4cedfbcb0451", 
+            "menu": 1, 
+            "is_query": 0, 
+            "is_edit": 0, 
+            "is_delete": 0, 
+            "checked": 1
+        }
+    }, 
+    {
+        "model": "dataView.author", 
+        "pk": "26a82523-8164-11eb-8ae0-4cedfbcb0451", 
+        "fields": {
+            "role": "1e42bd61-8164-11eb-ab64-4cedfbcb0451", 
+            "menu": 3, 
+            "is_query": 0, 
+            "is_edit": 0, 
+            "is_delete": 0, 
+            "checked": 1
+        }
+    }, 
+    {
+        "model": "dataView.author", 
+        "pk": "26a909e2-8164-11eb-a562-4cedfbcb0451", 
+        "fields": {
+            "role": "1e42bd61-8164-11eb-ab64-4cedfbcb0451", 
+            "menu": 2, 
+            "is_query": 0, 
+            "is_edit": 0, 
+            "is_delete": 0, 
+            "checked": 1
+        }
+    }, 
+    {
+        "model": "dataView.author", 
+        "pk": "26a97c4a-8164-11eb-96bd-4cedfbcb0451", 
+        "fields": {
+            "role": "1e42bd61-8164-11eb-ab64-4cedfbcb0451", 
+            "menu": 4, 
+            "is_query": 0, 
+            "is_edit": 0, 
+            "is_delete": 0, 
+            "checked": 1
+        }
+    }, 
+    {
+        "model": "dataView.author", 
+        "pk": "26a9eea3-8164-11eb-be2b-4cedfbcb0451", 
+        "fields": {
+            "role": "1e42bd61-8164-11eb-ab64-4cedfbcb0451", 
+            "menu": 5, 
+            "is_query": 0, 
+            "is_edit": 0, 
+            "is_delete": 0, 
+            "checked": 1
+        }
+    }, 
+    {
+        "model": "dataView.author", 
+        "pk": "26aa6102-8164-11eb-89e7-4cedfbcb0451", 
+        "fields": {
+            "role": "1e42bd61-8164-11eb-ab64-4cedfbcb0451", 
+            "menu": 6, 
+            "is_query": 0, 
+            "is_edit": 0, 
+            "is_delete": 0, 
+            "checked": 1
+        }
+    }
+]
