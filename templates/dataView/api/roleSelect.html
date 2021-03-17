@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+    <title>bootstrap风格树菜单插件ztree</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+    <link rel="stylesheet" href="{% static 'zTree/css/metroStyle/metroStyle.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'layuimini/lib/layui-v2.5.5/css/layui.css' %}" media="all">
+    <link rel="stylesheet" href="{% static 'layuimini/css/container.css' %}" media="all">
+    <style>
+        /* 这段样式只是用于演示 */
+        .layui-card-body{display: flex;  flex-direction: column; text-align: left; height: 419px;}
+        .ztree * {
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div style="padding: 7px; background-color: #F2F2F2;">
+  <div class="layui-row layui-col-space5">
+    <div class="layui-col-md2">
+      <div class="layui-card">
+        <div class="layui-card-header">角色列表</div>
+        <div class="layui-card-body">
+          <ul id="treeDemo" class="ztree"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<input type="text" value="true" id="sp1" style="display: none;">
+</body>
+    <script type="text/javascript" src="{% static 'zTree/js/jquery-1.4.4.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'zTree/js/jquery.ztree.all.js' %}"></script>
+    <script src="{% static 'layuimini/lib/layui-v2.5.5/layui.js' %}" charset="utf-8"></script>
+    <script type="text/javascript">
+        layui.use(['layer', 'form','table'], function(){
+            var layer = layui.layer, form = layui.form, $ = layui.$, table = layui.table;
+            zTreeInit();
+        });
+    function zTreeInit() {
+        var setting = {
+            view: {
+                selectedMulti: false
+            },
+            check: {
+                enable: true
+            },
+            data: {
+                simpleData: {
+                    enable: true
+                }
+            },
+            edit: {
+                enable: false, //允许编辑
+                editNameSelectAll: false,
+            },
+            callback: {
+            }
+        };
+		var zNodes = {{ data|safe }};
+		$(document).ready(function () {
+            $.fn.zTree.init($("#treeDemo"), setting, zNodes);
+        });
+    }
+    var call_back_data = function () {
+        var zTree = $.fn.zTree.getZTreeObj("treeDemo");
+        var check_true = zTree.getCheckedNodes(true);
+        var check_list = []
+        if (check_true.length>0) {
+            for (var i = 0; i < check_true.length; i++) {
+                if (check_true[i].level!=0) {
+                    check_list.push({'id':check_true[i]['id'], 'name':check_true[i]['name']})
+                }
+            }
+        }
+        return check_list
+    }
+    </script>
+</html>

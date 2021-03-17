@@ -1,0 +1,163 @@
+﻿<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+    <title>添加职位</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" href="{% static 'zTree/css/metroStyle/metroStyle.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'layuimini/lib/layui-v2.5.5/css/layui.css' %}" media="all">
+    <style>
+        .ztree * {
+            font-size: 14px;
+        }
+        .mcontainer{
+            position:relative;  /*父容器的相对定位  */
+        }
+        .key{
+            border:0;     /*去掉button按钮的棱角(边框)   */
+            position:absolute;    /*子元素的绝对定位    */
+            top:7px;
+            left:90%;   /* 按钮的绝对定位的位置   */
+            width:25px;  height:25px;     /* 按钮的大小 */
+            background-size:13px 13px;    /* 背景图片的大小  */
+        }
+    </style>
+</head>
+<body>
+<div class="mcontainer">
+<input type="text" id="key" lay-verify="title" autocomplete="off" placeholder="搜索职位" class="layui-input">
+<button type="button" class="key layui-icon" onclick="input_clear()" >&#xe9aa;</button>
+</div>
+<div class="mcontainer" id="hidelb" style="display: none;">
+    <label class="layui-icon" style="position:relative;left:1%;" ></label>
+    <button type="button" class="layui-icon" style="color: #1E9FFF;cursor:pointer" onclick="input_add()" >&#xe624;</button>
+</div>
+<ul id="treeDemo" class="ztree"></ul>
+</body>
+<script type="text/javascript" src="{% static 'zTree/js/jquery-1.4.4.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'zTree/js/jquery.ztree.all.js' %}"></script>
+<script type="text/javascript" src="{% static 'zTree/js/jquery.ztree.exhide.min.js' %}"></script>
+
+<script src="{% static 'layuimini/lib/layui-v2.5.5/layui.js' %}" charset="utf-8"></script>
+<script type="text/javascript">
+    layui.use(['layer', 'form','table'], function(){
+        var layer = layui.layer, form = layui.form, $ = layui.$, table = layui.table;
+        zTreeInit();
+    });
+    var dataCheck = {{ dataCheck|safe }};
+    var setting = {
+            view: {
+                selectedMulti: true,
+                fontCss: function(treeId, node) {
+                    return node.font ? node.font : {};
+                } ,
+            },
+            check: {
+                enable: true,
+                autoCheckTrigger: true
+            },
+            data: {
+                simpleData: {
+                    enable: true
+                }
+            },
+            edit: {
+                enable: false,
+            },
+            callback: {
+                beforeCheck: zTreeBeforeCheck,
+            }
+        };
+
+    function zTreeInit() {
+        var zNodes = {{ data|safe }};
+        $(document).ready(function () {
+            $.fn.zTree.init($("#treeDemo"), setting, zNodes);
+        });
+        var zTree = $.fn.zTree.getZTreeObj("treeDemo");
+        for (var i = 0; i < dataCheck.length; i++) {
+                zTree.checkNode(zTree.getNodeByParam('id', dataCheck[i]['id']), true );
+            }
+        document.getElementById("key").addEventListener("input", ChangeText, false);
+        input_clear()
+    }
+    function zTreeBeforeCheck(treeId, treeNode) {
+        var isTrue;
+        $.ajax({
+            url: "../dep_add_post/"+treeNode.id,
+            data: {'do': 'isTrue', 'value': treeNode.id},
+            type: "Post",
+            dataType: "json",
+            success: function(res){
+                var c = JSON.parse(res.data);
+                isTrue = c <= 0;
+            }
+        });
+        return isTrue
+    }
+    function filter(node) {
+        return (node.name.indexOf($("#key").val().toUpperCase()) == -1);
+    }
+    function ChangeText() {
+        var zTree = $.fn.zTree.getZTreeObj("treeDemo");
+        var nodes = zTree.getNodesByParam("isHidden", true);
+        if (nodes.length>0) {zTree.showNodes(nodes)}
+        nodes = zTree.getNodesByFilter(filter);
+        for (var i = 0; i < nodes.length; i++) {
+            zTree.hideNode(nodes[i]);
+        }
+        if ((zTree.getNodesByParam("isHidden", false).length)==0) {
+            $("#hidelb").show();
+            $("#hidelb label")[0].innerText = '添加职位：'+$("#key").val()
+        }else{$("#hidelb").hide();}
+    }
+    //输入框的清空事件
+    function input_clear(){
+        $("#key").val("");  //根据id清空
+        $("#hidelb").hide();
+        $.ajax({
+            url: "../dep_add_post/"+{{ dpe|safe }},
+            data: {'do': 'refresh'},
+            type: "Post",
+            dataType: "json",
+            success: function (res) {
+                var zNodes = JSON.parse(res.data);
+                var zTree = $.fn.zTree.getZTreeObj("treeDemo");
+                $.fn.zTree.init($("#treeDemo"), zTree.setting, zNodes);
+            }
+        })
+
+    }
+    function input_add() {
+        $("#hidelb").hide();
+        $.ajax({
+            url: "../dep_add_post/"+$("#key").val(),
+            data: {'do': 'addPost'},
+            type: "Post",
+            dataType: "json",
+            success: function(res){
+                var zNodes = JSON.parse(res.data);
+                var zTree = $.fn.zTree.getZTreeObj("treeDemo");
+                $.fn.zTree.init($("#treeDemo"), zTree.setting, zNodes);
+                //var zTree = $.fn.zTree.getZTreeObj("treeDemo");
+                //console.log(zTree.getNodes())
+                // zTree.addNodes(null, zNodes);
+            }
+        });
+    }
+    var call_back_data = function () {
+        input_clear();
+        var zTree = $.fn.zTree.getZTreeObj("treeDemo");
+        var check_true = zTree.getCheckedNodes(true);
+        var check_list = []
+        if (check_true.length>0) {
+            for (var i = 0; i < check_true.length; i++) {
+                check_list.push({'id':check_true[i]['id'], 'name':check_true[i]['name']})
+            }
+        }
+        return check_list
+
+    }
+
+</script>
+</html>

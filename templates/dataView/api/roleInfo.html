@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+    <title>bootstrap风格树菜单插件ztree</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+    <link rel="stylesheet" href="{% static 'zTree/css/metroStyle/metroStyle.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'layuimini/lib/layui-v2.5.5/css/layui.css' %}" media="all">
+    <link rel="stylesheet" href="{% static 'layuimini/css/container.css' %}" media="all">
+    <style>
+        /* 这段样式只是用于演示 */
+        .layui-card-body{display: flex;  flex-direction: column; text-align: left; height: 200px;}
+        .ztree * {
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div style="padding: 7px; background-color: #F2F2F2;">
+  <div class="layui-row layui-col-space5">
+    <div class="layui-col-md2">
+      <div class="layui-card">
+        <div class="layui-card-header">角色列表</div>
+        <div class="layui-card-body">
+          <ul id="treeDemo" class="ztree"></ul>
+        </div>
+      </div>
+    </div>
+    <div class="layui-col-md2">
+      <div class="layui-card">
+        <div class="layui-card-header">目录列表
+            <span id="saveRole" hidden="hidden" class="layui-icon" style="float: right;font-size: 14px; color: #1E9FFF;cursor:pointer" title="保存设置">保存</span>
+        </div>
+        <div class="layui-card-body">
+            <ul id="menuList" class="ztree"></ul>
+        </div>
+      </div>
+    </div>
+    <div class="layui-col-md8">
+      <div class="layui-card">
+        <div class="layui-card-header">页面权限</div>
+        <div class="layui-card-body">
+        <div class="container">
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<input type="text" value="true" id="sp1" style="display: none;">
+</body>
+    <script type="text/javascript" src="{% static 'zTree/js/jquery-1.4.4.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'zTree/js/jquery.ztree.all.js' %}"></script>
+    <script src="{% static 'layuimini/lib/layui-v2.5.5/layui.js' %}" charset="utf-8"></script>
+    <script type="text/javascript">
+        layui.use(['layer', 'form','table'], function(){
+            var layer = layui.layer, form = layui.form, $ = layui.$, table = layui.table;
+            zTreeInit();
+            $(".layui-card-body").height($(window).height()-77)
+        });
+    function zTreeInit() {
+        var setting2 = {
+            view: {
+                selectedMulti: false
+            },
+            check: {
+                enable: true
+            },
+            data: {
+                simpleData: {
+                    enable: true
+                }
+            },
+            edit: {
+                enable: false, //允许编辑
+                editNameSelectAll: true
+            },
+            callback: {
+                onClick: "",
+            }
+        };
+        var setting = {
+            view: {
+                addHoverDom: addHoverDom, //添加鼠标悬浮事件
+                removeHoverDom: removeHoverDom, //鼠标悬浮接触事件
+                selectedMulti: false
+            },
+            check: {
+                enable: false
+            },
+            data: {
+                simpleData: {
+                    enable: true
+                }
+            },
+            edit: {
+                enable: true, //允许编辑
+                editNameSelectAll: true,
+                showRemoveBtn: showRemoveBtn, //自定义哪些节点会显示删除按钮
+                showRenameBtn: showRenameBtn,
+            },
+            callback: {
+                beforeDrop:beforeDrop,
+                onDrop: _zTreeOnDrop,
+                beforeEditName: beforeEditName,
+                beforeRemove: beforeRemove, //删除前触发事件
+                onClick: zTreeOnClick,
+            }
+        };
+		var zNodes = {{ data|safe }};
+		$(document).ready(function () {
+            $.fn.zTree.init($("#treeDemo"), setting, zNodes);
+        });
+        function addHoverDom(treeId, treeNode) {
+            var sObj = $("#" + treeNode.tId + "_span");
+            if (treeNode.editNameFlag || $("#addBtn_" + treeNode.tId).length > 0) return;
+            var addStr = "<span class='button add' id='addBtn_" + treeNode.tId
+                + "' title='add node' onfocus='this.blur();'></span>";
+            sObj.after(addStr);
+            var btn = $("#addBtn_" + treeNode.tId);
+            if (btn) btn.bind("click", function () {
+                var zTree = $.fn.zTree.getZTreeObj("treeDemo"),
+                        parentId = sessionStorage.getItem("parentId");
+                    zTree.selectNode(treeNode);
+                layer.open({
+                    type: 1,
+                    title: treeNode.name+"--新增",
+                    area: ['400px', '170px'],
+                    content: '<div class="layui-form-item center" id="add-node">\n' +
+                        '    <label class="layui-form-label" style="width: 100px">节点名字</label>\n' +
+                        '    <div class="layui-input-block" style="height: 18px;">\n' +
+                        '        <input type="text" id="addTitle" autocomplete="off" style="width: 220px" class="layui-input">\n' +
+                        '    </div>\n' +
+                        '</div>',
+                    btn:['提交'],// yes\no\close
+                    btnAlign: 'c',
+                    yes: function (index, layero) {
+                        $.ajax({
+                            url: "../roleInfo/",
+                            data: {'do': 'add', 'value':$('#addTitle').val()},
+                            type: "Post",
+                            dataType: "json",
+                            success: function(res){
+                                var data = JSON.parse(res.data);
+                                zTree.addNodes(treeNode, {id: data[0].id, pId: treeNode.id, name: data[0].name});
+                            }
+                        });
+                        layer.close(index);
+                    },
+                });
+                return false;
+            });
+            if (treeNode.level==1) {$("#addBtn_" + treeNode.tId).unbind().remove()};
+        }
+        function showRemoveBtn(treeId, treeNode) {
+            return treeNode.name!='角色管理'
+        }
+        function showRenameBtn(treeId, treeNode) {
+            return treeNode.name!='角色管理'
+        }
+        function removeHoverDom(treeId, treeNode) {
+            $("#addBtn_" + treeNode.tId).unbind().remove();
+        }
+        function beforeEditName(treeId, treeNode) {
+            var zTree = $.fn.zTree.getZTreeObj("treeDemo");
+            zTree.selectNode(treeNode);
+            layer.open({
+                type: 1,
+                title: treeNode.name+"--修改",
+                area: ['400px', '170px'],
+                content: '<div class="layui-form-item center" id="edit-node">\n' +
+                    '    <label class="layui-form-label" style="width: 100px">节点名字</label>\n' +
+                    '    <div class="layui-input-block" style="height: 18px;">\n' +
+                    '        <input type="text" value="'+treeNode.name+'" id="editTitle" name="title" autocomplete="off" style="width: 220px" class="layui-input">\n' +
+                    '    </div>\n' +
+                    '</div>',
+                btn:['提交'],// yes\no\close
+                btnAlign: 'c',
+                yes: function (index, layero) {
+                    $.ajax({
+                        url: "../roleInfo/",
+                        data: {'do': 'edit', 'value':$('#editTitle').val(), 'lastID':treeNode.id},
+                        type: "Post",
+                        dataType: "json",
+                        success: function(res){
+                           window.location.reload();//刷新框架
+                        }
+                    });
+                    layer.close(index);
+                },
+            });
+
+            return false;
+        }
+        //删除之前提示确认
+        function beforeRemove(treeId, treeNode) {
+            var zTree = $.fn.zTree.getZTreeObj(treeId);
+            layer.confirm("是否删除：角色 -- " + treeNode.name, {
+              btn: ['是','否'],title:'提示',
+            }, function(index){
+                $.ajax({
+                    url: "../roleInfo/",
+                    data: {'do': 'del', 'value':treeNode.name, 'lastID':treeNode.id},
+                    type: "Post",
+                    dataType: "json",
+                    success: function(res){
+                        layer.close(index);
+                        if (res.message == 2) {
+                            layer.msg(treeNode.name+'下还有子目录，无法删除！', {icon: 2});
+                        }else{
+                            zTree.removeNode(treeNode);
+                            layer.msg(treeNode.name+'－－已删除！', {icon: 1});
+                        }
+                    }
+                });
+            }, function(index){
+                layer.close(index);
+            });
+            return false;
+        }
+        //仅亲兄弟节点间可拖动
+        function beforeDrop(treeId, treeNodes, targetNode, moveType) {
+            var moveNode = treeNodes[0];
+            if (targetNode.level==0) {
+                layer.msg('禁止拖拽至根节点外！', {icon: 2});
+                return false;
+            }
+            switch (moveType)
+            {
+                case "prev":
+                case "next":
+                    if (moveNode.pId == targetNode.pId) {
+                        return true;
+                    }
+                    break;
+                case "inner":
+                    if (moveNode.pId == targetNode.pId) {
+                        return false;
+                    }
+                    break;
+            }
+            return true;
+        }
+        //用于捕获节点拖拽操作结束的事件回调函数  默认值： null
+        function _zTreeOnDrop(event, treeId, treeNodes, targetNode, moveType) {
+            if (!moveType) {return false;}
+            var zTree = $.fn.zTree.getZTreeObj(treeId);
+            var paramData = [];
+            var nodeData = [];
+                nodeData = zTree.getNodesByParam("level", 1);
+                $.each(nodeData, function (i, item) {
+                    var dept = {};
+                    dept["id"] = item.id;
+                    dept["roleName"] = item.name;
+                    dept["sortIndex"] = item.getIndex();//核心：当前节点同级的下标位
+                    paramData.push(dept);
+                });
+                $.ajax({
+                    url: "../roleInfo/",
+                    data: {'do': 'move', 'value':JSON.stringify(paramData)},
+                    type: "Post",
+                    dataType: "json",
+                    success: function(res){
+                        if (res.state=='success'){layer.msg('拖拽节点数据已更新！', {icon: 1});}
+                    }
+                });
+
+        }
+        function zTreeOnClick(event, treeId, treeNode, clickFlag) {
+            if (treeNode.level==1){
+                $("#menuList").find("li").remove();
+                $.ajax({
+                    url: "../roleInfo/",
+                    data: {'do': 'onclick', 'lastID':treeNode.id},
+                    type: "Post",
+                    dataType: "json",
+                    success: function(res){
+                        var zNodes = JSON.parse(res.data);
+                        $.fn.zTree.init($("#menuList"), setting2, zNodes);
+                        document.getElementById("saveRole").removeAttribute("hidden");
+                        sessionStorage.setItem("treeNodeid", treeNode.id);
+                    }
+                });
+            }
+        }
+        $("#saveRole").click(function(){
+            var treeNodeid = sessionStorage.getItem("treeNodeid");
+            var zTree = $.fn.zTree.getZTreeObj('menuList');
+            var node = zTree.getNodes();                                    //可以获取所有的父节点
+            var nodes = zTree.transformToArray(node);
+            var vData = [];
+            $.each(nodes, function (i, item) {
+                var author = {};
+                if (i!=0){
+                    author["menu_id"] = item.id;
+                    author["role_id"] = treeNodeid;
+                    author["checked"] = item.checked;
+                    vData.push(author)
+                }
+            });
+            $.post("../author/",{v:JSON.stringify(vData), do:1},function (res) {
+                if (res.message){layer.msg('更新成功！', {icon: 1});} else {layer.msg('更新出错！', {icon: 2});}
+            })
+        })
+    }
+    </script>
+</html>

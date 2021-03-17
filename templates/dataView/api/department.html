@@ -1,0 +1,555 @@
+﻿<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+    <title>部门管理</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+    <link rel="stylesheet" href="{% static 'zTree/css/metroStyle/metroStyle.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'layuimini/lib/layui-v2.5.5/css/layui.css' %}" media="all">
+    <link rel="stylesheet" href="{% static 'layuimini/css/container.css' %}" media="all">
+    <style>
+        /* 这段样式只是用于演示 */
+        .layui-card-body{display: flex;  flex-direction: column; text-align: left; height: 720px;}
+        .ztree * {
+            font-size: 14px;
+        }
+    </style>
+
+</head>
+
+<body>
+
+<div style="padding: 7px; background-color: #F2F2F2;">
+  <div class="layui-row layui-col-space5">
+    <div class="layui-col-md2">
+      <div class="layui-card">
+        <div class="layui-card-header">部门列表</div>
+        <div class="layui-card-body">
+          <ul id="treeDemo" class="ztree"></ul>
+        </div>
+      </div>
+    </div>
+    <div class="layui-col-md2">
+      <div class="layui-card">
+        <div class="layui-card-header">职务列表
+            <span id="addPost" class="layui-icon" style="float: right;font-size: 20px; color: #1E9FFF;cursor:pointer" title="添加职务">&#xe654;</span>
+        </div>
+        <div class="layui-card-body">
+            <ul id="postList" class="ztree"></ul>
+        </div>
+      </div>
+    </div>
+    <div class="layui-col-md8">
+      <div class="layui-card">
+        <div class="layui-card-header">用户列表
+            <span id="addUser" class="layui-icon" style="float: right;font-size: 20px; color: #1E9FFF;cursor:pointer" title="添加用户">&#xe654;</span>
+        </div>
+        <div class="layui-card-body">
+            <!--<ul id="postUser" class="ztree"></ul> -->
+        <div class="container">
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<input type="text" value="true" id="sp1" style="display: none;">
+</body>
+    <script type="text/javascript" src="{% static 'zTree/js/jquery-1.4.4.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'zTree/js/jquery.ztree.all.js' %}"></script>
+    <script src="{% static 'layuimini/lib/layui-v2.5.5/layui.js' %}" charset="utf-8"></script>
+    <script type="text/javascript">
+        layui.use(['layer', 'form','table'], function(){
+            var layer = layui.layer, form = layui.form, $ = layui.$, table = layui.table;
+            sessionStorage.setItem("dpeId", "");
+            zTreeInit();
+            $(".layui-card-body").height($(window).height()-77)
+
+        });
+    function zTreeInit() {
+        var setting = {
+            view: {
+                addHoverDom: addHoverDom, //添加鼠标悬浮事件
+                removeHoverDom: removeHoverDom, //鼠标悬浮接触事件
+                selectedMulti: false
+            },
+            check: {
+                enable: false
+            },
+            data: {
+                simpleData: {
+                    enable: true
+                }
+            },
+            edit: {
+                enable: true, //允许编辑
+                editNameSelectAll: true,
+                showRemoveBtn: showRemoveBtn, //自定义哪些节点会显示删除按钮
+                showRenameBtn: showRenameBtn,
+            },
+            callback: {
+                beforeDrag: beforeDrag,
+                beforeDrop:beforeDrop,
+                onDrop: _zTreeOnDrop,
+                beforeEditName: beforeEditName,
+                beforeRemove: beforeRemove, //删除前触发事件
+                onClick: zTreeOnClick,
+            }
+        };
+		var setting2 = {
+			view: {
+				selectedMulti: true,
+			},
+			check: {
+				enable: false,
+				autoCheckTrigger: true
+			},
+			data: {
+				simpleData: {
+					enable: true
+				}
+			},
+			edit: {
+				enable: true,
+			},
+			callback: {
+				onClick: postListOnClick,
+                beforeDrop:beforeDrop2,
+                onDrop:_zTreeOnDrop2
+			}
+		};
+        var zNodes = {{ data|safe }};
+        var log, className = "dark", postId;
+        $(document).ready(function () {
+            $.fn.zTree.init($("#treeDemo"), setting, zNodes);
+        });
+        function zTreeOnClick(event, treeId, treeNode) {
+            sessionStorage.setItem("dpeId", treeNode.id+"|"+treeNode.name+"|"+treeNode.level);
+            postId = undefined;
+            var parentId = sessionStorage.getItem("parentId");
+            $.ajax({
+                url: "../department/"+parentId,
+                data: {'do': 'onclick', 'lastID':treeNode.id},
+                type: "Post",
+                dataType: "json",
+                success: function(res){
+                    var zNodes = JSON.parse(res.data);
+                    $('.container').empty();
+                    $(document).ready(function () {
+                        $.fn.zTree.init($("#postList"), setting2, zNodes);
+                    });
+                    zNodes = JSON.parse(res.userData);
+                    if (zNodes.length>0) {
+                        $.each(zNodes, function(a,b){
+                            if (b.user__uPhotos) {
+                                $('.container').append('<div class="box" data-name="' + b.user__id + '"><a class="img" href="javascript:;" layuimini-content-href="https://www.baidu.com"><img src=' + b.user__uPhotos + '></a><p>' + b['user__realName'] + '</p></div>')
+                            }else{
+                                $('.container').append('<div class="box" data-name="' + b.user__id + '"><a class="img" href="javascript:;" layuimini-content-href="https://www.baidu.com"><img src=\'/static/layuimini/images/obscure.png\'></a><p>' + b['user__realName'] + '</p></div>')
+                            }
+                        });
+                        $('.box').click(function (a) {
+                            layer.open({
+                                type: 2,
+                                closeBtn: 1,
+                                area: ['800px', '100%'],
+                                anim: 5,
+                                shadeClose: true,
+                                content: '/dataView/userEdit/'+a.currentTarget.dataset.name,
+                                success: function(layero, index){
+                                    var body=layer.getChildFrame('body',index);//少了这个是不能从父页面向子页面传值的 //获取子页面的元素，进行数据渲染
+                                    body.contents().find("#is_refresh").val('');
+                                },
+                            });
+                        });
+                    }
+                }
+            });
+        }
+		function postListOnClick(event, treeId, treeNode) {
+            postId = treeNode.sId;
+            sessionStorage.setItem("dp_post_click", '#'+treeNode.tId+'_span');
+            $('.container').empty();
+            $.ajax({
+                url: "../dep_add_user/"+postId,
+                data: {'do': 'findPostUser'},
+                type: "Post",
+                dataType: "json",
+                success: function(res){
+                    var zNodes = JSON.parse(res.data);
+                    if (zNodes.length>0) {
+                        $.each(zNodes, function(a,b){
+                            if (b.user__uPhotos) {
+                                $('.container').append('<div class="box" data-name="' + b.user__id + '"><a class="img" href="javascript:;" layuimini-content-href="https://www.baidu.com"><img src=' + b.user__uPhotos + '></a><p>' + b['user__realName'] + '</p></div>')
+                            }else{
+                                $('.container').append('<div class="box" data-name="' + b.user__id + '"><a class="img" href="javascript:;" layuimini-content-href="https://www.baidu.com"><img src=\'/static/layuimini/images/obscure.png\'></a><p>' + b['user__realName'] + '</p></div>')
+                            }
+                        });
+                        $('.box').click(function (a) {
+                            layer.open({
+                                type: 2,
+                                closeBtn: 1,
+                                area: ['800px', '100%'],
+                                anim: 5,
+                                shadeClose: true,
+                                content: '/dataView/userEdit/'+a.currentTarget.dataset.name,
+                                success: function(layero, index){
+                                    var body=layer.getChildFrame('body',index);//少了这个是不能从父页面向子页面传值的 //获取子页面的元素，进行数据渲染
+                                    body.contents().find("#is_refresh").val('');
+                                },
+                            });
+                        });
+                    }
+                }
+            });
+
+		}
+        function beforeDrop(treeId, treeNodes, targetNode, moveType) {
+            if (targetNode.level==0) {
+                layer.msg('禁止拖拽至根节点外！', {icon: 2});
+                return false;
+            } else {
+                return true;
+            }
+        }
+        //在拖拽之前
+        function beforeDrag(treeId, treeNodes) {
+            for (var i=0,l=treeNodes.length; i<l; i++) {
+                if (treeNodes[i].drag === false) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        //仅亲兄弟节点间可拖动
+        function beforeDrop2(treeId, treeNodes, targetNode, moveType) {
+            var moveNode = treeNodes[0];
+            if (targetNode.level>0) {
+                layer.msg('禁止拖拽至根节点外！', {icon: 2});
+                return false;
+            }
+            switch (moveType)
+            {
+                case "prev":
+                case "next":
+                    if (moveNode.pId == targetNode.pId) {
+                        return true;
+                    }
+                    break;
+                case "inner":
+                    if (moveNode.pId == targetNode.pId) {
+                        return false;
+                    }
+                    break;
+            }
+            return true;
+        }
+        function _zTreeOnDrop2(event, treeId, treeNodes, targetNode, moveType) {
+            if (!moveType) {return false;}
+            var zTree = $.fn.zTree.getZTreeObj(treeId);
+            var paramData = [], nodeData = [], dpeId = sessionStorage.getItem("dpeId");
+                nodeData = zTree.getNodesByParam("level", 0);
+                $.each(nodeData, function (i, item) {
+                    var dept = {};
+                    dept["id"] = item.id;
+                    dept["roleName"] = item.name;
+                    dept["sortIndex"] = item.getIndex();//核心：当前节点同级的下标位
+                    paramData.push(dept);
+                });
+                $.ajax({
+                    url: "../department/"+dpeId,
+                    data: {'do': 'movePost', 'value':JSON.stringify(paramData)},
+                    type: "Post",
+                    dataType: "json",
+                    success: function(res){
+                        if (res.state=='success'){layer.msg('拖拽节点数据已更新！', {icon: 1});}
+                    }
+                });
+
+        }
+        //用于捕获节点拖拽操作结束的事件回调函数  默认值： null
+        function _zTreeOnDrop(event, treeId, treeNodes, targetNode, moveType) {
+            if (!moveType) {return false;}
+            var zTree = $.fn.zTree.getZTreeObj(treeId);
+            var paramData = [];
+            var nodeData = [];
+
+            //子节点拖拽到跟节点 和 根节点的相互排序
+            if (targetNode == null || treeNodes[0].level == 0) {
+                nodeData = zTree.getNodesByParam("level", 0);
+            } else {
+                // 拖拽自己成为子节点
+                var node = zTree.getNodeByTId(treeNodes[0].parentTId);
+                if (node.isParent) {
+                    nodeData = zTree.transformToArray(node.children);
+                }
+            }
+            $.each(nodeData, function (i, item) {
+                var dept = {};
+                dept["id"] = item.id;
+                dept["parentId"] = item.pId;//根目录则为null
+                dept["department"] = item.name;
+                dept["sortIndex"] = item.getIndex();//核心：当前节点同级的下标位
+                paramData.push(dept);
+            });
+            var parentId = sessionStorage.getItem("parentId");
+            $.ajax({
+                url: "../department/"+parentId,
+                data: {'do': 'move', 'value':JSON.stringify(paramData)},
+                type: "Post",
+                dataType: "json",
+                success: function(res){
+                    if (res.state=='success'){layer.msg('拖拽节点数据已更新！', {icon: 1});}
+                }
+            });
+        }
+        function onDrop(event, treeId, treeNodes, targetNode,moveType) {
+            var treeObj = $.fn.zTree.getZTreeObj(treeId);
+            var node = treeObj.getNodeByTId(treeNodes[0].tId);
+            //获取父节点 保存父节点真实id
+            var parentNode = node.getParentNode();
+            var objPId = parentNode.TrueId;
+            //拖拽成功时，修改被拖拽节点的pid
+            //console.log(event)
+            //console.log(treeId +'11111')
+            //console.log(treeNodes )
+            //console.log(treeNodes[0].parentCode)
+            //console.log(targetNode)
+            //console.log(moveType)
+            $.ajax({
+                type:'post',
+                url: '',
+                dataType: "text",
+                async: false,
+                success: function (data) {
+                },
+                error: function (msg) {
+                }
+            });
+        }
+        function showLog(str) {
+            if (!log) log = $("#log");
+            log.append("<li class='"+className+"'>"+str+"</li>");
+            if(log.children("li").length > 8) {
+                log.get(0).removeChild(log.children("li")[0]);
+            }
+        }
+        function getTime() {
+            var now= new Date(),
+                h=now.getHours(),
+                m=now.getMinutes(),
+                s=now.getSeconds(),
+                ms=now.getMilliseconds();
+            return (h+":"+m+":"+s+ " " +ms);
+        }
+        function beforeEditName(treeId, treeNode) {
+            // className = (className === "dark" ? "":"dark");
+            // showLog("[ "+getTime()+" beforeEditName ]&nbsp;&nbsp;&nbsp;&nbsp; " + treeNode.name);
+            var zTree = $.fn.zTree.getZTreeObj("treeDemo"),
+                parentId = sessionStorage.getItem("parentId");
+            zTree.selectNode(treeNode);
+            layer.open({
+                type: 1,
+                title: treeNode.name+"--修改",
+                area: ['400px', '170px'],
+                content: '<div class="layui-form-item center" id="edit-node">\n' +
+                    '    <label class="layui-form-label" style="width: 100px">节点名字</label>\n' +
+                    '    <div class="layui-input-block" style="height: 18px;">\n' +
+                    '        <input type="text" value="'+treeNode.name+'" id="editTitle" name="title" autocomplete="off" style="width: 220px" class="layui-input">\n' +
+                    '    </div>\n' +
+                    '</div>',
+                btn:['提交'],// yes\no\close
+                btnAlign: 'c',
+                yes: function (index, layero) {
+                    $.ajax({
+                        url: "../department/"+parentId,
+                        data: {'do': 'edit', 'value':$('#editTitle').val(), 'lastID':treeNode.id},
+                        type: "Post",
+                        dataType: "json",
+                        success: function(res){
+                           window.location.reload();//刷新框架
+                        }
+                    });
+                    layer.close(index);
+                },
+            });
+
+            return false;
+        }
+        function showRemoveBtn(treeId, treeNode) {
+            return treeNode.name!='所有部门'
+                &&treeNode.pId !='';
+        }
+        function showRenameBtn(treeId, treeNode) {
+            return treeNode.name!='所有部门'
+                &&treeNode.pId !='';
+        }
+        function addHoverDom(treeId, treeNode) {
+            var sObj = $("#" + treeNode.tId + "_span");
+            if (treeNode.editNameFlag || $("#addBtn_" + treeNode.tId).length > 0) return;
+            var addStr = "<span class='button add' id='addBtn_" + treeNode.tId
+                + "' title='add node' onfocus='this.blur();'></span>";
+            sObj.after(addStr);
+            var btn = $("#addBtn_" + treeNode.tId);
+            if (btn) btn.bind("click", function () {
+                var zTree = $.fn.zTree.getZTreeObj("treeDemo"),
+                        parentId = sessionStorage.getItem("parentId");
+                    zTree.selectNode(treeNode);
+                layer.open({
+                    type: 1,
+                    title: treeNode.name+"--新增",
+                    area: ['400px', '170px'],
+                    content: '<div class="layui-form-item center" id="add-node">\n' +
+                        '    <label class="layui-form-label" style="width: 100px">节点名字</label>\n' +
+                        '    <div class="layui-input-block" style="height: 18px;">\n' +
+                        '        <input type="text" id="addTitle" autocomplete="off" style="width: 220px" class="layui-input">\n' +
+                        '    </div>\n' +
+                        '</div>',
+                    btn:['提交'],// yes\no\close
+                    btnAlign: 'c',
+                    yes: function (index, layero) {
+                        $.ajax({
+                            url: "../department/"+parentId,
+                            data: {'do': 'add', 'value':$('#addTitle').val(), 'lastID':treeNode.id},
+                            type: "Post",
+                            dataType: "json",
+                            success: function(res){
+                                var data = JSON.parse(res.data);
+                                zTree.addNodes(treeNode, {id: data[0].id, pId: treeNode.id, name: data[0].name});
+                            }
+                        });
+                        layer.close(index);
+                    },
+                });
+                return false;
+            });
+        }
+        function removeHoverDom(treeId, treeNode) {
+            $("#addBtn_" + treeNode.tId).unbind().remove();
+        }
+        //删除之前提示确认
+        function beforeRemove(treeId, treeNode) {
+            var zTree = $.fn.zTree.getZTreeObj(treeId),
+                parentId = sessionStorage.getItem("parentId");
+            layer.confirm("是否删除：部门 -- " + treeNode.name, {
+              btn: ['是','否'],title:'提示',
+            }, function(index){
+                $.ajax({
+                    url: "../department/"+parentId,
+                    data: {'do': 'del', 'value':treeNode.name, 'lastID':treeNode.id},
+                    type: "Post",
+                    dataType: "json",
+                    success: function(res){
+                        layer.close(index);
+                        if (res.message == 2) {
+                            layer.msg(treeNode.name+'下还有子目录，无法删除！', {icon: 2});
+                        }else{
+                            zTree.removeNode(treeNode);
+                            layer.msg(treeNode.name+'－－已删除！', {icon: 1});
+                        }
+                    }
+                });
+            }, function(index){
+                layer.close(index);
+            });
+            return false;
+        }
+
+        $("#addPost").click(function(){
+            var dpeId = sessionStorage.getItem("dpeId");
+            if (dpeId.length==0 || dpeId.split("|")[2]==0) {
+                layer.msg('请选择指定的部门再添加', {icon: 2});
+            } else {
+                layer.open({
+                    title: dpeId.split("|")[1]+"：职位设置",
+                    type: 2,
+                    area:['400px', '500px'],
+                    content: '/dataView/dep_add_post/'+dpeId.split("|")[0],
+                    shadeClose:false,
+                    closeBtn:0,
+                    btn:['确认','取消'],// yes\no\close
+                    yes:function(index, b){
+                        var arr = $(b).find("iframe")[0].contentWindow.call_back_data();
+                        $.ajax({
+                            url: "../dep_add_post/"+dpeId.split("|")[0],
+                            data: {'do': 'dpePost', 'value':JSON.stringify(arr)},
+                            type: "Post",
+                            dataType: "json",
+                            success: function(res){
+                                $('.container').empty();
+                                var zNodes = JSON.parse(res.data);
+                                $(document).ready(function () {
+                                    $.fn.zTree.init($("#postList"), setting2, zNodes);
+                                });
+
+                            }
+                        });
+                        layer.close(index)
+                    },
+                    end: function(){
+                        //$("#icon").select();
+                    }
+                })
+            }
+            return false;
+        });
+        $("#addUser").click(function() {
+            if (postId != undefined) {
+                layer.open({
+                    title: "职务关联用户",
+                    type: 2,
+                    area:['540px', '500px'],
+                    content: '/dataView/dep_add_user/'+postId,
+                    shadeClose:false,
+                    closeBtn:0,
+                    btn:['确认','取消'],// yes\no\close
+                    yes:function(a, b){
+                        var arr = $(b).find("iframe")[0].contentWindow.gdata;
+                        $.ajax({
+                            url: "../dep_add_user/"+postId,
+                            data: {'do': 'addUser', 'value':JSON.stringify(arr)},
+                            type: "Post",
+                            dataType: "json",
+                            success: function(res){
+                                var zNodes = JSON.parse(res.data);
+                                if (zNodes.length>0) {
+                                    $('.container').empty();
+                                    console.log(zNodes);
+                                    $.each(zNodes, function(a,b){
+                                        if (b.user__uPhotos) {
+                                            $('.container').append('<div class="box" data-name="' + b.user__id + '"><a class="img" href="javascript:;" layuimini-content-href="https://www.baidu.com"><img src=' + b.user__uPhotos + '></a><p>' + b['user__realName'] + '</p></div>')
+                                        }else{
+                                            $('.container').append('<div class="box" data-name="' + b.user__id + '"><a class="img" href="javascript:;" layuimini-content-href="https://www.baidu.com"><img src=\'/static/layuimini/images/obscure.png\'></a><p>' + b['user__realName'] + '</p></div>')
+                                        }
+                                    });
+                                    $('.box').click(function (a) {
+                                        layer.open({
+                                            type: 2,
+                                            closeBtn: 1,
+                                            area: ['800px', '100%'],
+                                            anim: 5,
+                                            shadeClose: true,
+                                            content: '/dataView/userEdit/'+a.currentTarget.dataset.name,
+                                            success: function(layero, index){
+                                                var body=layer.getChildFrame('body',index);//少了这个是不能从父页面向子页面传值的 //获取子页面的元素，进行数据渲染
+                                                body.contents().find("#is_refresh").val('');
+                                            },
+                                        });
+                                    });
+                                }
+                            }
+                        });
+                        layer.close(a)
+                    },
+                    end: function(){
+                        //$("#icon").select();
+                    }
+                })
+            }else {
+                layer.msg('请先选中　部门－职务，再操作添加用户！')
+            }
+
+        })
+    }
+    </script>
+</html>

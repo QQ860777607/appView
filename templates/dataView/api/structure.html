@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="Access-Control-Allow-Origin" content="*">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="icon" href="images/favicon.ico">
+    <link rel="stylesheet" href="{% static 'layuimini/lib/layui-v2.5.5/css/layui.css' %}" media="all">
+    <link rel="stylesheet" href="{% static 'layuimini/css/public.css' %}" media="all">
+    <!--[if lt IE 9]>
+    <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+    <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <style id="layuimini-bg-color">
+    </style>
+</head>
+<body>
+<div class="layui-card">
+              <!--<div class="layui-card-header">公司列表</div>-->
+              <div class="layui-card-body">
+        <table id="table1" lay-filter="table1"></table>
+    </div>
+</div>
+<script type="text/html" id="toolbarDemo">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-normal layui-btn-sm layui-icon" lay-event="add">&#xe654;新增</button>
+        <button class="layui-btn layui-btn-normal layui-btn-sm layui-icon" lay-event="batchDel">&#xe640;删除</button>
+        <button class="layui-btn layui-btn-normal layui-btn-sm layui-icon" lay-event="flush">&#xe669;</button>
+    </div>
+</script>
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-normal layui-btn-sm" lay-event="edit"><i class="layui-icon layui-icon-edit"></i>编辑</a>
+    <a class="layui-btn layui-btn-normal layui-btn-sm" lay-event="priority"><i class="layui-icon layui-icon-senior"></i>二级部门</a>
+</script>
+<script type="text/html" id="ctime">
+{% verbatim %}{{layui.util.toDateString(new Date(d.ctime), "yyyy-MM-dd HH:mm:ss")}}{% endverbatim %}
+</script>
+<script type="text/html" id="uptime">
+{% verbatim %}{{layui.util.toDateString(new Date(d.uptime), "yyyy-MM-dd HH:mm:ss")}}{% endverbatim %}
+</script>
+</body>
+<script src="{% static 'layuimini/lib/layui-v2.5.5/layui.js' %}" charset="utf-8"></script>
+<script src="{% static 'layuimini/js/lay-config.js' %}" charset="utf-8"></script>
+<script>
+    layui.use(['jquery', 'table', 'layer'], function(){
+        let $ = layui.jquery, layer = layui.layer, table = layui.table;
+        table.render({
+            elem: '#table1',
+            checkbox : true,
+            toolbar: '#toolbarDemo',
+            cols: [[
+                {type:'checkbox', fixed: 'left'},
+                {field: 'id', title: '主键ID', width:100, sort: true, fixed: 'left'},
+                {field: 'companyName', title: '机构部门', sort: true},
+                {field: 'ctime', title: '创建时间', sort: true, templet: '#ctime'},
+                {field: 'uptime', title: '更新时间', sort: true, templet: '#uptime'},
+                {field: '', title: '操作',fixed: 'right', width:360, align:'center', toolbar: '#barDemo'}
+                ]
+            ],
+            data: {{ get_name|safe }},
+            even: true,     //开启隔行背景
+            page: true,     //是否显示分页
+            //,limits: [5, 7, 10]
+            limit: 50, //每页默认显示的数量
+
+            done: function(res, curr, count){
+            }
+        });
+        //头工具栏事件
+        table.on('toolbar(table1)', function (obj) {
+            var cbList = [], delList=[];
+            var checkStatus = table.checkStatus('table1');
+            var data = checkStatus.data;
+            switch (obj.event) {
+                case 'getCheckData':
+                    layer.alert(data[0].id);
+                    break;
+                case 'getCheckLength':
+                    layer.msg('选中了：' + data.length + ' 个');
+                    break;
+                case 'isAll':
+                    layer.msg(checkStatus.isAll ? '全选' : '未全选');
+                    break;
+                case 'add':
+                    layer.open({
+                        type: 1,
+                        closeBtn: false,
+                        area: '390px',
+                        anim: 5,
+                        shadeClose: true,
+                        title:'<div>添加机构部门</div>',
+                        content:
+                            '  <div class="layui-form-item">\n' +
+                            '    <label class="layui-form-label">输入名称</label>\n' +
+                            '    <div class="layui-input-block">\n' +
+                            '      <input style="width:260px" type="text" id="remark" autocomplete="off" class="layui-input">\n' +
+                            '    </div>\n' +
+                            '  </div>',
+                        btnAlign: 'r',// l\c\r
+                        btn:['提交'],// yes\no\close
+                        yes: function (index, layero) {
+                            $.ajax({
+                                url: "../structure/",
+                                data: {'do': 0, 'id':$('#remark').val()},
+                                type: "Post",
+                                dataType: "json",
+                                success: function(res){
+                                    if (res.message!=null) {
+                                        layer.msg(res.message);
+                                    } else {
+                                        var data = JSON.parse(res.data);
+                                        table.reload('table1', {
+                                            data:data
+                                        })
+                                    }
+                                }
+                            });
+                            layer.close(index);
+                            },
+                    });
+                    break;
+                case 'batchDel':
+                    if (checkStatus.data.length>0){
+                        layer.confirm('真的删除行么', function(index){
+                            cbList = table.cache['table1'];
+                            for (var k = 0; k < checkStatus.data.length; k++) {
+                                var _delId = checkStatus.data[k].id;
+                                delList.push(_delId);
+                                for (var i = 0; i < cbList.length; i++) {
+                                    if (cbList[i].id == _delId) {
+                                        cbList.splice(i, 1);
+                                        break;
+                                    }
+                                }
+                            }
+                            $.ajax({
+                                url: "../structure/",
+                                data: {'do': 1, 'id':JSON.stringify(delList)},
+                                type: "Post",
+                                dataType: "json",
+                                success: function(res){
+                                    if (res.message=='done') {
+                                        layer.msg(JSON.stringify(delList) + '删除成功！');
+                                    }
+                                }
+                            });
+                            table.reload("table1", {
+                                data: cbList,
+                            });
+                            layer.close(index);
+                        });
+                    } else {layer.msg("请勾选要删除的机构部门")}
+                    break;
+                case'flush':
+                    var tableIns = table.render()
+                    tableIns.reload('table1', {
+                        url: "../structure/"
+                        ,where: {'do': 2}
+                        , method: "POST"
+                        // 在渲染完成后将where和cols置位空
+                        ,done: function (res, curr, count) {
+                            this.where={};
+                            this.cols=[];
+                        }
+                    });
+                    break;
+                case'search':
+                    layer.msg("根据用户名查找");
+                    var name = $('input[name="search"]').val();
+                    table.reload('test', {
+                        url: '',    //换成自己的url
+                        where: {
+                            name: name,
+                        },
+                        page: {
+                            curr: 1
+                        }
+                    });
+                    break;
+            }
+        });
+        //监听单元格
+        table.on('tool(table1)', function(obj){
+            const data = obj.data; //得到所在行所有键值
+            if(obj.event === 'priority'){
+                // layer.msg('ID：'+ data.id + ' 二级部门的查看操作');
+                sessionStorage.setItem("parentId", data.id);
+                layer.open({
+                    type: 2,
+                    title: data.companyName+'--部门编辑',
+                    shade:  [0.4, '#525252'],
+                    maxmin: true,
+                    area: ['100%', '100%'],
+                    content: '../department/'+data.id
+                });
+
+            } else if(obj.event === 'edit'){
+                layer.open({
+                        type: 1,
+                        closeBtn: false,
+                        area: '390px',
+                        anim: 5,
+                        shadeClose: true,
+                        title:'<div>修改机构部门</div>',
+                        content:
+                            '  <div class="layui-form-item">\n' +
+                            '    <label class="layui-form-label">当前名称</label>\n' +
+                            '    <div class="layui-input-block">\n' +
+                            '      <input style="width:260px" type="text" id="remark" value='+data.companyName +' autocomplete="off" class="layui-input">\n' +
+                            '    </div>\n' +
+                            '  </div>',
+                        btnAlign: 'r',// l\c\r
+                        btn:['提交'],// yes\no\close
+                        yes: function (index, layero) {
+                            $.ajax({
+                                url: "../structure/",
+                                data: {'do': 3, 'id':JSON.stringify([data.id,$('#remark').val()])},
+                                type: "Post",
+                                dataType: "json",
+                                success: function(res){
+                                    if (res.message!=null) {
+                                        layer.msg(res.message);
+                                    } else {
+
+                                        var data = JSON.parse(res.data);
+                                        table.reload('table1', {
+                                            data:data
+                                        })
+                                    }
+                                }
+                            });
+                            layer.close(index);
+                            },
+                    });
+            }
+        });
+    })
+</script>
+</html>

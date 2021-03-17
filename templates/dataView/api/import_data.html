@@ -1,0 +1,255 @@
+﻿<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>首页</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="Access-Control-Allow-Origin" content="*">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="icon" href="images/favicon.ico">
+    <link rel="stylesheet" href="{% static 'layuimini/lib/layui-v2.5.5/css/layui.css' %}" media="all">
+    <!--[if lt IE 9]>
+    <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+    <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <style id="layuimini-bg-color">
+    </style>
+</head>
+<body>
+
+<div id="main">
+    <table id="demo" lay-filter="test" class="layui-hide"></table>
+</div>
+<script type="text/html" id="toolbarDemo">
+    <div class="layui-form">
+         <div class="layui-input-inline">
+             <button id="file1" class="layui-btn" lay-event="upFile1"><i class="layui-icon">&#xe67c;</i>职位数据上传</button>
+             <button id="file2" class="layui-btn" lay-event="upFile2"><i class="layui-icon">&#xe67c;</i>员工数据上传</button>
+        </div>
+    </div>
+</script>
+<script type="text/html" id="dateTpl">
+{% verbatim %}{{layui.util.toDateString(new Date(d.IssuseTime-28800000), "yyyy-MM-dd HH:mm:ss")}}{% endverbatim %}
+</script>
+</body>
+<script src="{% static 'layuimini/lib/layui-v2.5.5/layui.js' %}" charset="utf-8"></script>
+<script src="{% static 'layuimini/js/lay-config.js' %}" charset="utf-8"></script>
+<script>
+layui.use(['jquery', 'table','layer','form','laydate', 'upload'], function(){
+    const success_d = function(res){
+        layer.close(loadIndex);
+        layer.msg('查询成功');
+        var tabledata = [];
+        for (var i = 0, len = res['get_name'].length; i < len; i++) {
+            tabledata.push(res['get_name'][i])
+        }
+        table.reload("demo", {
+            data: tabledata,
+            page: {
+                curr: 1 //重新从第 1 页开始
+            },
+        });
+        // 添加排序监听，按全部数据进行排序
+        table.on('sort(test)', function (obj) {
+            let type = obj.type,
+                field = obj.field,
+                thisData = [];
+            if (type === 'asc') { //升序
+                thisData = layui.sort(tabledata, field);
+            } else if (type === 'desc') { //降序
+                thisData = layui.sort(tabledata, field, true);
+            } else { //清除排序
+                thisData = layui.sort(tabledata, table.config.indexName);
+            }
+            //将排好序的Data重载表格
+            table.reload("demo", {
+                initSort: obj,
+                data: thisData
+            });
+        });
+        //location.reload(); //删除成功后再刷新
+    };
+    let $ = layui.jquery
+        , layer = layui.layer
+        , form = layui.form
+        , laydate = layui.laydate
+        , table = layui.table
+        , upload = layui.upload
+        , element = layui.element;
+    //展示已知数据
+    table.render({
+        elem: '#demo',
+        checkbox : true,
+        toolbar: '#toolbarDemo',
+        cols: [[
+            {type:'checkbox', fixed: 'left'},
+            {field: 'id', title: '序号', width:70, sort: true, fixed: 'left'},
+
+            ]
+        ],
+        data: {{ get_name|safe }},
+        even: true,     //开启隔行背景
+        size: 'sm',     //sm小尺寸的表格,lg(大尺寸)
+        page: true,     //是否显示分页
+        //,limits: [5, 7, 10]
+        limit: 50, //每页默认显示的数量
+        done: function(res, curr, count){
+            //如果是异步请求数据方式，res即为你接口返回的信息。
+            //如果是直接赋值的方式，res即为：{data: [], count: 99} data为当前页数据、count为数据总长度
+            //console.log(res);
+            //得到当前页码
+            //console.log(curr);
+            //得到数据总量
+            //console.log(count);
+        }
+    });
+    uploadFile1();
+    function uploadFile1(){
+        var filepath = $("#file1").val();
+        var loadIndex;
+        upload.render({ //允许上传的文件后缀
+            elem: '#file1'
+            , url: '../ImportData/' //改成您自己的上传接口
+            , accept: 'file' //普通文件
+            , exts: 'xlsx|xls'
+            , data: {
+                'do':1, 'file': filepath
+            }
+            , before: function () {
+                loadIndex = layer.load(2, { shade: [0.35, '#ccc'] });
+            }
+            , done: function (res) {
+                layer.close(loadIndex);
+                layer.msg('上传成功');
+                }
+        })
+    }
+    uploadFile2();
+    function uploadFile2(){
+        var filepath = $("#file2").val();
+        var loadIndex;
+        upload.render({ //允许上传的文件后缀
+            elem: '#file2'
+            , url: '../ImportData/' //改成您自己的上传接口
+            , accept: 'file' //普通文件
+            , exts: 'xlsx|xls'
+            , data: {
+                'do':2, 'file': filepath
+            }
+            , before: function () {
+                loadIndex = layer.load(2, { shade: [0.35, '#ccc'] });
+            }
+            , done: function (res) {
+                layer.close(loadIndex);
+                layer.msg('上传成功');
+                }
+        })
+    }
+    //监听事件
+    $('#main').on('click','#searchEmailCompany', function () {
+        var v = $('#searContent').val(), s = $('#sid').val();
+        loadIndex = layer.load(2, { shade: [0.35, '#ccc'] });
+        $.ajax({
+            url:"../InformationReview/",
+            data:{'v':v, 's':s, 'do':1},
+            type:"Post",
+            dataType:"json",
+            success:success_d
+        })
+    })
+    //数据同步事件
+    $('#main').on('click','#onlineData', function () {
+        layer.confirm('将同步网站未审核数据，需要耐心等待！', function(index) {
+            layer.close(index);
+            loadIndex = layer.load(2, {shade: [0.35, '#ccc']});
+            $.ajax({
+                url: "../InformationReview/",
+                data: {'do': 5},
+                type: "Post",
+                dataType: "json",
+                success: success_d
+            })
+        })
+    })
+    //去重事件
+    $('#main').on('click','#deduplication', function () {
+        layer.confirm('是否查询重复数据', function(index){
+            layer.close(index);
+            loadIndex = layer.load(2, { shade: [0.35, '#ccc'] });
+            $.ajax({
+                url:"../InformationReview/",
+                data:{'do':3},
+                type:"Post",
+                dataType:"json",
+                success:success_d
+            })
+        });
+    })
+    //监听单元格事件
+    table.on('tool(test)', function(obj){
+        var data = obj.data;
+        if(obj.event === 'Introduce'){
+            layer.open({
+                type: 1,
+                skin: 'layui-layer-admin',
+                closeBtn: false,
+                area: '800px',
+                anim: 5,
+                shadeClose: true,
+                title:'<div>序号：'+data['id']+'｜名称：'+data['Ptitle']+'｜<button class="layui-btn layui-btn-sm" id="save" data-type="getCheckData">保存</button><button class="layui-btn layui-btn-sm" id="del" data-type="getCheckData">删除</button></div>',
+                content: '<div style="padding:20px;">'+ data['Introduce'] +'</div>'
+            });
+        }
+    });
+    //监听表格复选框选择
+    table.on('checkbox(test)', function(obj){
+        //console.log(obj)
+    });
+    var active = {
+        getCheckData: function(){ //获取选中数据
+            var checkStatus = table.checkStatus('demo'),data = checkStatus.data;
+            var IdList = []
+            for (var i = 0, len = data.length; i < len; i++) {
+                IdList.push(parseInt(data[i]['ID']))
+            }
+            layer.confirm('已选择的产品ID：'+JSON.stringify(IdList)+'<br>是否删除更新数据源？', function(index){
+                layer.close(index);
+                $.ajax({
+                    url:"../InformationReview/",
+                    data:{'v':JSON.stringify(IdList), 'do':4},
+                    type:"Post",
+                    dataType:"json",
+                    success:success_d,
+                })
+
+            })
+
+        }
+        ,getCheckLength: function(){ //获取选中数目
+            var checkStatus = table.checkStatus('demo')
+            ,data = checkStatus.data;
+            layer.msg('选中了：'+ data.length + ' 个');
+        }
+        ,isAll: function(){ //验证是否全选
+            var checkStatus = table.checkStatus('demo');
+            layer.msg(checkStatus.isAll ? '全选': '未全选')
+        }
+    };
+
+    $('#main').on('click', '#isChooseDate', function(){
+        var type = $(this).data('type');
+        console.log(type);
+        active[type] ? active[type].call(this) : '';
+    });
+});
+
+
+</script>
+
+
+</html>

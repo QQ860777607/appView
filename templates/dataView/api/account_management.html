@@ -1,0 +1,192 @@
+﻿<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+    <title>用户管理</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" href="{% static 'layuimini/lib/layui-v2.5.5/css/layui.css' %}" media="all">
+    <link rel="stylesheet" href="{% static 'layuimini/css/container.css' %}" media="all">
+    <style>
+        /* 这段样式只是用于演示 */
+        .layui-card-body{display: flex;  flex-direction: column; text-align: left;}
+        .ztree * {
+            font-size: 14px;
+        }
+    </style>
+
+</head>
+<body>
+
+<div style="padding: 7px; background-color: #F2F2F2;">
+  <div class="layui-row">
+      <div class="layui-card">
+        <!--<div class="layui-card-header">添加用户</div> -->
+        <div class="layui-card-body">
+            <table id="table1" lay-filter="table1"></table>
+        </div>
+      </div>
+  </div>
+</div>
+<script type="text/html" id="toolbarDemo">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-normal layui-icon layui-btn-sm" lay-event="add"><i class="layui-icon">&#xe654;</i>新增</button>
+		<button id="file2" class="layui-btn layui-btn-normal layui-icon layui-btn-sm" lay-event="upFile"><i class="layui-icon">&#xe67c;</i>批量导入</button>
+    </div>
+</script>
+<script type="text/html" id="barDemo">
+    <span class="layui-icon" title="修改" lay-event="edit" style="font-size: 21px;cursor: pointer; color: #1E9FFF;">&#xe642;</span>
+    <span class="layui-icon" title="删除" lay-event="del" style="font-size: 21px;cursor: pointer; color: #ff1e1e;">&#xe640;</span>
+</script>
+<script type="text/html" id="ctime">
+{% verbatim %}{{layui.util.toDateString(new Date(d.ctime), "yyyy-MM-dd")}}{% endverbatim %}
+</script>
+<script type="text/html" id="uptime">
+{% verbatim %}{{layui.util.toDateString(new Date(d.uptime), "yyyy-MM-dd")}}{% endverbatim %}
+</script>
+</body>
+<script src="{% static 'layuimini/lib/layui-v2.5.5/layui.js' %}" charset="utf-8"></script>
+<script src="{% static 'layuimini/js/lay-config.js' %}" charset="utf-8"></script>
+<script>
+    layui.use(['jquery', 'table', 'form', 'layer', 'upload'], function() {
+        let $ = layui.jquery, layer = layui.layer, table = layui.table, upload = layui.upload, form = layui.form;
+        //导出表格
+        var ins = table.render({
+            elem: '#table1',
+            id: 'exportTable',
+            checkbox: true,
+            toolbar: '#toolbarDemo',
+            defaultToolbar: ['filter', 'print',　// 默认['filter','print','exports'],
+                {
+                    title: '导出表格数据',
+                    layEvent: 'export',
+                    icon: 'layui-icon-download-circle',
+                },
+            ],
+            cols: [[
+                {type: 'checkbox', fixed: 'left'},
+                {field: 'id', title: '主键ID', width: 100, sort: true, fixed: 'left'},
+                {field: 'userName', title: '账号', width: 130, sort: true},
+                {field: 'realName', title: '姓名', width: 100, sort: true},
+                {field: 'uRole__roleName', title: '角色', width: 200, event: 'setRole', sort: true, style:'color:red;font-size:12px;cursor: pointer'},
+                {field: 'uCollege', title: '学历', width: 100, sort: true},
+                {field: 'uBDate', title: '生日', width: 100, sort: true, templet: '#ctime'},
+                {field: 'uDate', title: '入职日期', width: 100, sort: true, templet: '#ctime'},
+                {field: 'userMail', title: '邮箱'},
+                {field: 'status', title: '状态', width: 100, sort: true},
+                {field: 'uptime', title: '更新时间', sort: true, templet: '#uptime'},
+                {field: '', title: '操作', fixed: 'right', width: 130, align: 'center', toolbar: '#barDemo'}
+            ]],
+            data: {{ get_name|safe }},
+            even: true,     //开启隔行背景
+            size: 'sm',     //sm小尺寸的表格,lg(大尺寸)
+            page: true,     //是否显示分页
+            //,limits: [5, 7, 10]
+            limit: 23, //每页默认显示的数量
+            done: function (res, curr, count) {
+            }
+        });
+		uploadFile2();
+		function uploadFile2(){
+			var filepath = $("#file2").val();
+			var loadIndex;
+			upload.render({ //允许上传的文件后缀
+				elem: '#file2'
+				, url: '../ImportData/' //改成您自己的上传接口
+				, accept: 'file' //普通文件
+				, exts: 'xlsx|xls'
+				, data: {
+					'do':2, 'file': filepath
+				}
+				, before: function () {
+					loadIndex = layer.load(2, { shade: [0.35, '#ccc'] });
+				}
+				, done: function (res) {
+					layer.close(loadIndex);
+					location.reload();
+				}
+			})
+		}
+        table.on('toolbar(table1)', function (obj) {
+            switch (obj.event) {
+                case 'export':
+                    table.exportFile(ins.config.id, ins.config.data, 'csv');
+                    break;
+                case 'add':
+                    layer.open({
+                        type: 2,
+                        closeBtn: 1,
+                        area: ['770px', '100%'],
+                        anim: 5,
+                        title:'<div>添加员工账号</div>',
+                        content:'/dataView/userRegEdit/',
+                        btnAlign: 'r',// l\c\r
+                    });
+                    break;
+            }
+        })
+		table.on('tool(table1)', function (obj) {
+			var data = obj.data;
+            if(obj.event === 'setRole'){
+                layer.open({
+                    title: data.realName+'('+data.userName+')'+'角色选择',
+                    type: 2,
+                    area: ['400px', '600px'],
+                    fixed: false, //不固定
+                    content: '/dataView/roleSelect/'+data.id,
+                    btn:['修改','关闭'],// yes\no\close
+                    btnAlign: 'c',
+                    yes:function(index, b) {
+                        var arr = $(b).find("iframe")[0].contentWindow.call_back_data(),s = '';
+                        $.each(arr, function(a,b){
+                            s =s+b.name+'，'
+                        });
+                        $.post("../roleSelect/edit",{v:JSON.stringify(arr),vid:data.id},function (a) {
+                            a = JSON.parse(a);
+                            if (a.message == 'success') {
+                                layer.msg('修改内容已更新', {icon: 1})
+                            }
+                        })
+                        layer.close(index);
+                        obj.update({
+                            uRole__roleName: s.substr(0, s.length - 1)
+                        });
+                    }
+                });
+            }
+			if (obj.event === 'edit') {
+				var index = layer.open({
+					title: '编辑用户',
+					type: 2,
+					closeBtn: 1,
+					area: ['800px', '100%'],
+					anim: 5,
+					content: '/dataView/userEdit/'+data.id,
+					success: function(layero, index){
+                        /*
+                        // 调用子页面中的方法
+                        var iframeWin = window["layui-layer-iframe" + index];//得到iframe页的窗口对象，执行iframe页的方法：iframeWin.method();
+                        // 传值子页面方法1
+                        var frameId = $(layero).find('iframe').attr("id");//获取当前打开的子页面id
+                        var iframeWin2 = window.frames[frameId].document; //找到子页面的document对象
+                        */
+					},
+				});
+				$(window).on("resize", function () {
+					layer.full(index);
+				});
+				return false;
+			} else if (obj.event === 'del') {
+				layer.confirm('真的删除行么', function (index) {
+				    $.post("../userRegEdit/",{name:obj.data.id, do:3},function (res) {
+			            res = JSON.parse(res);
+                        if (res.message=='ok') {layer.msg(obj.data.name+'-用户已删除新', {icon: 1})}
+                    })
+					obj.del();
+					layer.close(index);
+				});
+			}
+		});
+
+    })
+</script>
+</html>

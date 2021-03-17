@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+    <title>菜单管理</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" href="{% static 'zTree/css/metroStyle/metroStyle.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'layuimini/lib/layui-v2.5.5/css/layui.css' %}" media="all">
+    <link rel="stylesheet" href="{% static 'layuimini/lib/font-awesome-4.7.0/css/font-awesome.min.css' %}" media="all">
+
+    <style>
+        .layui-card-body{display: flex;  flex-direction: column; text-align: left; height: 780px;}
+        .ztree * {
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+<div style="padding: 7px; background-color: #F2F2F2;">
+  <div class="layui-row layui-col-space5">
+    <div class="layui-col-md3">
+      <div class="layui-card">
+        <div class="layui-card-header">目录列表</div>
+        <div class="layui-card-body">
+          <ul id="treeDemo" class="ztree"></ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="layui-col-md9">
+      <div class="layui-card">
+        <div class="layui-card-header">目录管理</div>
+        <div class="layui-card-body">
+            <!--<ul id="postUser" class="ztree"></ul> -->
+        <div class="container">
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<input type="text" value="true" id="sp1" style="display: none;">
+</body>
+<script type="text/javascript" src="{% static 'zTree/js/jquery-1.4.4.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'zTree/js/jquery.ztree.all.js' %}"></script>
+<script src="{% static 'layuimini/lib/layui-v2.5.5/layui.js' %}" charset="utf-8"></script>
+<script src="{% static 'layuimini/js/lay-config.js' %}" charset="utf-8"></script>
+<script type="text/javascript">
+    layui.use(['iconPickerFa', 'layer', 'form','table'], function(){
+        var Fa = layui.iconPickerFa,
+            layer = layui.layer, form = layui.form, $ = layui.$, table = layui.table;
+        zTreeInit(Fa,form);
+        $(".layui-card-body").height($(window).height()-77)
+
+    });
+    function zTreeInit(Fa,form) {
+        var setting = {
+            view: {
+                addHoverDom: addHoverDom, //添加鼠标悬浮事件
+                removeHoverDom: removeHoverDom, //鼠标悬浮接触事件
+                selectedMulti: false
+            },
+            check: {
+                enable: false
+            },
+            data: {
+                simpleData: {
+                    enable: true
+                }
+            },
+            edit: {
+                enable: true, //允许编辑
+                editNameSelectAll: true,
+                showRemoveBtn: showRemoveBtn, //自定义哪些节点会显示删除按钮
+                showRenameBtn: showRenameBtn,
+            },
+            callback: {
+                beforeDrag: beforeDrag,
+                beforeDrop:beforeDrop,
+                onDrop: _zTreeOnDrop,
+                beforeEditName: beforeEditName,
+                beforeRemove: beforeRemove, //删除前触发事件
+                onClick: zTreeOnClick,
+            }
+        };
+        var zNodes = {{ data|safe }};
+        var log, className = "dark", postId;
+        $(document).ready(function () {
+            $.fn.zTree.init($("#treeDemo"), setting, zNodes);
+        });
+        function zTreeOnClick(event, treeId, treeNode) {
+            $('.container').empty();
+            if(treeNode.level>1) {
+                $.ajax({
+                    url: "../menu_info/",
+                    data: {'do': 'onclick', 'title': treeNode.name, 'ID': treeNode.id},
+                    type: "Post",
+                    dataType: "json",
+                    success: function (res) {
+                        var zNodes = JSON.parse(res.data),_s,_b,_sw,_rk="";
+                        if (zNodes[0].target=='_self') {_s = 'selected=""'}else{_b = 'selected=""'}
+                        if (zNodes[0].status=='启用') {_sw = 'checked=""'}
+                        if (zNodes[0].remark) {_rk = zNodes[0].remark}
+                        // 菜单名称
+                        var No2 = '<div class="layui-form-item"><label class="layui-form-label">菜单名称</label><div class="layui-input-inline"><input type="text" name="title" disabled="" class="layui-input layui-disabled" value="'+zNodes[0].title+'" required=""></div></div>';
+                        var No3 = '<div class="layui-form-item"><label class="layui-form-label">状态</label><div class="layui-input-block"><input type="checkbox" '+_sw+' name="status" lay-skin="switch" lay-filter="switchTest" lay-text="启用|禁用"></div></div>';
+                        var No4 = '<div class="layui-form-item"><label class="layui-form-label">视图名称</label><div class="layui-input-inline"><input type="text" name="href" class="layui-input" value="'+zNodes[0].href+'"></div></div>';
+                        var No5 = '<div class="layui-form-item"><label class="layui-form-label">打开方式</label><div class="layui-input-inline"><select name="target"><option value="_self"'+_s+'>本页打开</option><option value="_blank" '+_b+'>新窗口打开</option></select></div></div>';
+                        var No6 = '<div class="layui-form-item layui-form-text"><label class="layui-form-label">功能说明</label><div class="layui-input-block"><textarea name="remark" placeholder="请输入内容" class="layui-textarea">'+_rk+'</textarea></div></div>';
+                        var btn = '<div class="layui-form-item"><div class="layui-input-inline"><button class="layui-btn layui-btn-normal" lay-submit="" lay-filter="btn1">保存</button></div></div>';
+
+                        if (zNodes.length>0) {
+                            $('.container').append("<div class=\"layui-form layui-form-pane\">\n" +
+                                "<div class=\"layui-form-item\">\n" +
+                                "   <label for=\"\" class=\"layui-form-label\">默认图标</label>\n" +
+                                "   <div class=\"layui-input-block\">\n" +
+                                "       <input type=\"text\" name=\"icon\" id=\"iconPicker\" lay-filter=\"iconPicker\" class=\"hide\" style=\"display:none;\">\n" +
+                                "   </div>\n" +
+                                "</div>"+No2+No3+No4+No5+No6+btn+"\n" +
+                                "</div>");
+                            Fa.render({
+                                elem: '#iconPicker',
+                                // fa 图标接口
+                                url: "{% static 'layuimini/lib/font-awesome-4.7.0/less/variables.less' %}",
+                                search: true,               // 是否开启搜索：true/false，默认true
+                                type: 'fontClass',          // 数据类型：fontClass/unicode，推荐使用fontClass
+                                page: false,                // 是否开启分页：true/false，默认true
+                                // limit: 12,               // 每页显示数量，默认12
+                                cellWidth: '50px',          // 每个图标格子的宽度：'45px'或'20%'
+                                click: function (data) {},  // 点击回调
+                                success: function (d) {}    // 渲染成功后的回调
+                            });
+                            Fa.checkIcon('iconPicker', zNodes[0].icon); // 默认选中图标
+                            form.render();
+                            //监听提交
+                            form.on('submit(btn1)', function (data) {
+                                $.post("../menu_info/",{'do': 'save', 'title': JSON.stringify(data.field), 'ID': treeNode.id},function(res){
+                                    if (JSON.parse(res).state=='success') {
+                                        layer.msg('保存成功', {icon: 1});
+                                    }else{
+                                        layer.msg('保存出错', {icon: 2});
+                                    }
+                                });
+                                return false;
+                            });
+                        }
+                    }
+                })
+            }else{
+                console.log(treeNode.name)
+            }
+        }
+
+        function beforeDrop(treeId, treeNodes, targetNode, moveType) {
+            if (targetNode.level==0) {
+                layer.msg('禁止拖拽至根节点外！', {icon: 2});
+                return false;
+            } else {
+                return true;
+            }
+        }
+        //在拖拽之前
+        function beforeDrag(treeId, treeNodes) {
+            for (var i=0,l=treeNodes.length; i<l; i++) {
+                if (treeNodes[i].drag === false) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        //用于捕获节点拖拽操作结束的事件回调函数  默认值： null
+        function _zTreeOnDrop(event, treeId, treeNodes, targetNode, moveType) {
+            if (!moveType) {return false;}
+            var zTree = $.fn.zTree.getZTreeObj(treeId);
+            var paramData = [];
+            var nodeData = [];
+
+            //子节点拖拽到跟节点 和 根节点的相互排序
+            if (targetNode == null || treeNodes[0].level == 0) {
+                nodeData = zTree.getNodesByParam("level", 0);
+            } else {
+                // 拖拽自己成为子节点
+                var node = zTree.getNodeByTId(treeNodes[0].parentTId);
+                if (node.isParent) {
+                    nodeData = zTree.transformToArray(node.children);
+                }
+            }
+            $.each(nodeData, function (i, item) {
+                var dept = {};
+                dept["id"] = item.id;
+                dept["parentId"] = item.pId;//根目录则为null
+                dept["department"] = item.name;
+                dept["sortIndex"] = item.getIndex();//核心：当前节点同级的下标位
+                paramData.push(dept);
+            });
+
+            $.ajax({
+                url: "../menu_info/",
+                data: {'do': 'move', 'title':JSON.stringify(paramData), 'ID': "tt"},
+                type: "Post",
+                dataType: "json",
+                success: function(res){
+                    if (res.state=='success'){
+                        layer.msg('拖拽节点数据已更新！', {icon: 1});
+                    }
+                }
+            });
+        }
+        function onDrop(event, treeId, treeNodes, targetNode,moveType) {
+            var treeObj = $.fn.zTree.getZTreeObj(treeId);
+            var node = treeObj.getNodeByTId(treeNodes[0].tId);
+            var parentNode = node.getParentNode();
+            var objPId = parentNode.TrueId;
+            $.ajax({
+                type:'post',
+                url: '',
+                dataType: "text",
+                async: false,
+                success: function (data) {
+                },
+                error: function (msg) {
+                }
+            });
+        }
+        function showLog(str) {
+            if (!log) log = $("#log");
+            log.append("<li class='"+className+"'>"+str+"</li>");
+            if(log.children("li").length > 8) {
+                log.get(0).removeChild(log.children("li")[0]);
+            }
+        }
+        function getTime() {
+            var now= new Date(),
+                h=now.getHours(),
+                m=now.getMinutes(),
+                s=now.getSeconds(),
+                ms=now.getMilliseconds();
+            return (h+":"+m+":"+s+ " " +ms);
+        }
+        function beforeEditName(treeId, treeNode) {;
+            var zTree = $.fn.zTree.getZTreeObj("treeDemo");
+            layer.open({
+                type: 1,
+                title: treeNode.name+"--修改",
+                area: ['400px', '170px'],
+                content: '<div class="layui-form-item center" id="edit-node">\n' +
+                    '    <label class="layui-form-label" style="width: 100px">节点名字</label>\n' +
+                    '    <div class="layui-input-block" style="height: 18px;">\n' +
+                    '        <input type="text" value="'+treeNode.name+'" id="editTitle" name="title" autocomplete="off" style="width: 220px" class="layui-input">\n' +
+                    '    </div>\n' +
+                    '</div>',
+                btn:['提交'],// yes\no\close
+                btnAlign: 'c',
+                yes: function (index, layero) {
+                    $.ajax({
+                        url: "../menu_info/",
+                        data: {'do': 'edit', 'title':$('#editTitle').val(), 'ID':treeNode.id},
+                        type: "Post",
+                        dataType: "json",
+                        success: function(res){
+                            switch (res.message) {
+                                case 1:
+                                    treeNode.name = $('#editTitle').val();
+                                    zTree.editName(treeNode);
+                                    zTree.cancelEditName();
+                                    layer.msg('完成修改！', {icon: 1});
+                                    layer.close(index);
+                                    break;
+                                case 0:
+                                    layer.msg('系统默认的菜单无法修改！', {icon: 2});
+                                    break;
+                            }
+                        }
+                    });
+                },
+            });
+            return false;
+        }
+        function showRemoveBtn(treeId, treeNode) {
+            return treeNode.name!='目录管理'// && treeNode.pId !='';
+        }
+        function showRenameBtn(treeId, treeNode) {
+            return treeNode.name!='目录管理'// && treeNode.pId !='';
+        }
+        function addHoverDom(treeId, treeNode) {
+            var sObj = $("#" + treeNode.tId + "_span");
+            if (treeNode.editNameFlag || $("#addBtn_" + treeNode.tId).length > 0) return;
+            var addStr = "<span class='button add' id='addBtn_" + treeNode.tId
+                + "' title='add node' onfocus='this.blur();'></span>";
+            sObj.after(addStr);
+            var btn = $("#addBtn_" + treeNode.tId);
+            if (btn) btn.bind("click", function () {
+                var zTree = $.fn.zTree.getZTreeObj("treeDemo");
+                    zTree.selectNode(treeNode);
+                layer.open({
+                    type: 1,
+                    title: treeNode.name+"--新增",
+                    area: ['380px', '170px'],
+                    content: '<div class="layui-form-item center" id="add-node">\n' +
+                        '    <label class="layui-form-label" style="width: 60px">目录名称</label>\n' +
+                        '    <div class="layui-input-block" style="height: 18px;">\n' +
+                        '        <input type="text" id="addTitle" autocomplete="off" style="width: 260px" class="layui-input">\n' +
+                        '    </div>\n' +
+                        '</div>',
+                    btn:['提交'],// yes\no\close
+                    btnAlign: 'c',
+                    yes: function (index, layero) {
+                        $.ajax({
+                            url: "../menu_info/",
+                            data: {'do': 'add', 'title':$('#addTitle').val(), 'ID':treeNode.id},
+                            type: "Post",
+                            dataType: "json",
+                            success: function(res){
+                                var data = JSON.parse(res.data);
+                                zTree.addNodes(treeNode, {id: data[0].id, pId: treeNode.id, name: data[0].name});
+                            }
+                        });
+                        layer.close(index);
+                    },
+                });
+                return false;
+            });
+        }
+        function removeHoverDom(treeId, treeNode) {
+            $("#addBtn_" + treeNode.tId).unbind().remove();
+        }
+        //删除之前提示确认
+        function beforeRemove(treeId, treeNode) {
+            var zTree = $.fn.zTree.getZTreeObj(treeId);
+            layer.confirm("是否删除：" + treeNode.name, {
+              btn: ['是','否'],title:'提示',
+            }, function(index){
+                $.ajax({
+                    url: "../menu_info/",
+                    data: {'do': 'del', 'title':treeNode.name, 'ID':treeNode.id},
+                    type: "Post",
+                    dataType: "json",
+                    success: function(res){
+                        switch (res.message) {
+                            case 0:
+                                layer.msg(treeNode.name+'－－已删除！', {icon: 1});
+                                break;
+                            case 1:
+                                layer.msg(treeNode.name+'是系统自带目录，无法删除！', {icon: 2});
+                                break;
+                            case 2:
+                                layer.msg(treeNode.name+'下还有子目录，无法删除！', {icon: 2});
+                                break;
+                        }
+                    }
+                });
+            }, function(index){
+                layer.close(index);
+            });
+            return false;
+        }
+    }
+</script>
+</html>

@@ -1,0 +1,55 @@
+﻿<!DOCTYPE html>
+{% load static %}
+
+<html>
+ <head>
+  <meta charset="utf-8" />
+  <title>Layui</title>
+  <meta name="renderer" content="webkit" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+     <link rel="stylesheet" href="{% static 'layuimini/lib/layui-v2.5.5/css/layui.css' %}" media="all">
+  <!-- 注意：如果你直接复制所有代码到本地，上述css路径需要改成你本地的 -->
+     <style>
+         .demo-transfer{margin: 10px 30px;}
+     </style>
+ </head>
+<body>
+    <div id="test4" class="demo-transfer"></div>
+</body>
+<script src="{% static 'layuimini/lib/layui-v2.5.5/layui.js' %}" charset="utf-8"></script>
+<script>
+    var gdata;
+    layui.use(['transfer', 'layer', 'util'], function(){
+        const $ = layui.$
+        ,transfer = layui.transfer
+        ,layer = layui.layer
+        ,util = layui.util
+        ,data = {{ data|safe }}
+        ,dataCheck = {{ dataCheck|safe }};
+        //实例调用
+        transfer.render({
+            elem: '#test4'
+            ,height: 380
+            ,title: ['员工列表', '就职人员']
+            ,data: data
+            ,value: dataCheck                   //初始右侧数据
+            ,showSearch: true                               //显示搜索框
+            ,id: 'userList'                                 //定义唯一索引
+            ,onchange: function(obj, index){                //穿梭时的回调
+                gdata = transfer.getData('userList');       //获取右侧数据
+            }
+            ,parseData: function(res){                      //数据格式解析
+                return {
+                    "value": res.id                         //数据值
+                    ,"title": res.title                     //数据标题
+                    //,"disabled": res.disabled             //是否禁用
+                    //,"checked": res.checked               //是否选中
+                }
+            }
+        })
+        gdata = transfer.getData('userList');
+    });
+</script>
+
+</html>

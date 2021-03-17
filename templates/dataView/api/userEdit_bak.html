@@ -1,0 +1,244 @@
+﻿<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+    <title>用户注册</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" href="{% static 'layuimini/lib/layui-v2.5.5/css/layui.css' %}" media="all">
+    <link rel="stylesheet" href="{% static 'layuimini/css/public.css' %}" media="all">
+    <link rel="stylesheet" href="{% static 'layuimini/js/lay-module/step-lay/step.css' %}" media="all">
+  <style>
+  .layui-input-block{width: 512px; height: 80px}
+  </style>
+</head>
+<body>
+    <div class="layui-fluid">
+    <div class="layui-card">
+    <div class="layui-card-body" style="padding: 15px;">
+    <form class="layui-form" action="">
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label">注册账号</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="userName" id="userName" autocomplete="off" value="XX" disabled class="layui-input layui-disabled" />
+                </div>
+            </div>
+
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label">姓名</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="realName" id="realName" lay-verify="required|realName" placeholder="输入中文名" autocomplete="off" class="layui-input" />
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label">出生日期</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="uBDate" id="date" placeholder="请选择" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label">性别</label>
+                <div class="layui-input-inline">
+                    <input type="radio" name="uSex" value="1" title="男" checked="" />
+                    <input type="radio" name="uSex" value="2" title="女" />
+                </div>
+            </div>
+
+            <div class="layui-inline">
+                <label class="layui-form-label">身份证</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="identity" lay-verify="identity" placeholder="" autocomplete="off" class="layui-input" />
+                </div>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label">学历</label>
+                <div class="layui-input-inline">
+                    <select name="uCollege">
+                        {% for v in arrayEducation %}
+                            {% if v == '大专' %}
+                                <option selected value="{{ forloop.counter }}">{{ v }}</option>
+                                {% else %}
+                                <option value="{{ forloop.counter }}">{{ v }}</option>
+                            {% endif %}
+
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label">个人爱好</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="uHobbies" placeholder="请输入" autocomplete="off" class="layui-input" />
+                </div>
+            </div>
+
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label">用户照片</label>
+                <div class="layui-input-inline">
+                    <div id="cupload-1"></div>
+                </div>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label">邮箱</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="userMail" placeholder="xx@xx.xx" autocomplete="off" class="layui-input" />
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label">入职日期</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="uDate" id="uDate" lay-verify="date" placeholder="yyyy-MM-dd" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+        </div>
+        <div class="layui-form-item" id="area-picker">
+            <div class="layui-form-label">所属区域</div>
+            <div class="layui-input-inline" style="width: 164px;">
+                <select name="uProvince" class="province-selector" data-value="" lay-filter="province-1">
+                    <option value="">请选择省</option>
+                </select>
+            </div>
+            <div class="layui-input-inline" style="width: 165px;">
+                <select name="uCity" class="city-selector" data-value="" lay-filter="city-1">
+                    <option value="">请选择市</option>
+                </select>
+            </div>
+            <div class="layui-input-inline" style="width: 164px;">
+                <select name="uCounty" class="county-selector" data-value="" lay-filter="county-1">
+                    <option value="">请选择区</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label">街道门牌</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="uStreet" lay-verify="title" placeholder="请输入" autocomplete="off" class="layui-input" style="width: 513px;" />
+                </div>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">用户状态</label>
+            <div class="layui-input-inline">
+                <input type="checkbox" checked="" name="status" lay-skin="switch" lay-text="正常|冻结" />
+            </div>
+        </div>
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">个人简介</label>
+            <div class="layui-input-block">
+                <textarea name="description" placeholder="请输入内容" class="layui-textarea"></textarea>
+            </div>
+        </div>
+      <div class="layui-form-item layui-layout-admin">
+       <div class="layui-input-block">
+        <div class="layui-footer" style="left: 0;">
+         <input class="layui-btn" type="button" lay-submit lay-filter="component-form-demo1" value="确认修改">
+        </div>
+       </div>
+      </div>
+     </form>
+    </div>
+   </div>
+  </div>
+</body>
+    <script src="{% static 'layuimini/lib/layui-v2.5.5/layui.js' %}" charset="utf-8"></script>
+    <script src="{% static 'layuimini/js/lay-config.js' %}" charset="utf-8"></script>
+    <script src="{% static 'layuimini/js/fileupload.js' %}" charset="utf-8"></script>
+<script type="text/javascript">
+    function SunPage(a,b) {
+        layui.use(['jquery','form', 'layarea'], function () {
+            var $ = layui.jquery, form = layui.form, layarea = layui.layarea;
+            $("[name='"+a+"']").attr('data-value','河北省');
+            $("[name='uCity']").attr('data-value','唐山市');
+            $("[name='uCounty']").attr('data-value','路北区');
+
+            layarea.render({
+                elem: '#area-picker',
+                data:{
+                    //city: "唐山市",
+                    cityCode: "130200",
+                    //county: "路北区",
+                    countyCode: "130203",
+                    //province: "河北省",
+                    provinceCode: "130000"
+                }
+
+            });
+            $("[name='"+a+"']").siblings("div.layui-form-select").find("input[type='text']").attr("value",'唐山市');
+            //console.log($("[name='"+a+"']").siblings("div.layui-form-select").find("input[type='text']").attr("placeholder"));
+
+            //form.render('select','#area-picker');
+        })
+    }
+</script>
+
+<script>
+//配置插件目录
+layui.use(['jquery', 'form', 'layedit', 'laydate', 'upload', 'layarea'], function(){
+    var form = layui.form
+        ,$ = layui.jquery
+        ,layer = layui.layer
+        ,layedit = layui.layedit
+        ,laydate = layui.laydate
+        ,upload = layui.upload
+        ,layarea = layui.layarea;
+    layarea.render({
+        elem: '#area-picker',
+        change: function (res) {
+            //选择结果
+            console.log(res);
+        }
+    });
+
+    form.verify({
+        //密码的验证
+        pass: [/^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,20}$/,'密码必须6到12位，且不能出现空格'],
+        realName: [/[\u4e00-\u9fa5]{2,10}$/,'请使用中文名，至少两个汉字']
+    });
+
+    //日期
+    laydate.render({
+        elem: '#date'
+    });
+    laydate.render({
+        elem: '#uDate'
+    });
+    /* form.on('select(province-1)',function(data){
+        console.log(data);
+        console.log(data.elem); //得到select原始DOM对象
+        console.log(data.value); //得到被选中的值
+        console.log(data.othis); //得到美化后的DOM对象
+    });
+    监听提交 */
+    form.on('submit(component-form-demo1)', function(data){
+		$.post("../userRegEdit/",{name:JSON.stringify(data.field), do:2},function (res) {
+			res = JSON.parse(res);
+			if (res.message==='ok') {
+				parent.location.reload();
+				var index = parent.layer.getFrameIndex(window.name);
+				parent.layer.close(index);
+
+			} else{
+				layer.msg("网络错误，请重试");
+			}
+		});
+        return false; // false不重置，true重置表单
+    });
+    var filepath = new Cupload ({
+			ele: '#cupload-1',
+		});
+
+});
+</script>
+</html>
