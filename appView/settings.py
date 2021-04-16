@@ -83,7 +83,7 @@ DATABASES = {
         'HOST': '192.168.0.123',      # mysql服务所在的主机ip 0.123　56.101
         'PORT': 3306,                  # mysql服务端口
         'USER': 'root',
-        'PASSWORD': '设置密码',
+        'PASSWORD': '修改密码',
     }
 }
 
@@ -93,7 +93,7 @@ CACHES = {
         'LOCATION': 'redis://192.168.0.123:6379/2',
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "PASSWORD": "qianjunjie",
+            "PASSWORD": "修改密码",
         },
     },
 }
